@@ -296,6 +296,8 @@ def download_images(file_name):
 				image_urls =[]
 			print image_urls
 			for i,im_url in enumerate(list(image_urls)):
-				im_url = str(im_url.strip()).replace("'","").replace('"','')
-				print im_url.strip()
-				store_image(im_url.strip(),row.get('designer name'),row.get('name'),i)
+				im_url = str(im_url.strip()).replace("'","").replace('"','').strip()
+				if "images.voylla.com" in im_url:
+					im_url= im_url.replace("/large/","/original/")
+				print im_url
+				store_image(im_url,row.get('designer name'),row.get('name'),i)
