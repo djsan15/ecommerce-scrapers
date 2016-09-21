@@ -147,19 +147,19 @@ def csv_exporter(designer_name,prod,headers):
 		file_exists = True
 	else:
 		myfile = open(file_name, 'wb')
-        try:
-                writer = csv.writer(myfile)
-                if not file_exists:
-                        writer.writerow(headers)
-                row = []
-                for k in headers:
-                        row.append(prod.get(k,' '))
-                writer.writerow(row)
-        except:
-                print "csv writer exception"
-        finally:
-                myfile.close()
-        
+	try:
+		writer = csv.writer(myfile)
+		if not file_exists:
+			writer.writerow(headers)
+		row = []
+		for k in headers:
+			row.append(prod.get(k,' '))
+		writer.writerow(row)
+	except:
+		print "csv writer exception"
+	finally:
+		myfile.close()
+
 def main_exc():
 	designer_urls = designer_urls_exclusively
 	headers = ['designer name','name','selling price','description','colour','fabric','image_urls']
@@ -186,8 +186,8 @@ def get_designer_data_voy(designer_url,resultcount=36):
 	for u in infinite_urls:
 		product_urls += get_product_urls(u,'div.product_listing_image a')
 	# print product_urls
+	print len(product_urls)
 	print '----------------DONE---------------------'
-	# print len(product_urls)
 	return product_urls
 
 def get_product_data_voy(prod_url):
@@ -263,9 +263,9 @@ def main_voy():
 	headers = ['designer name','name','selling price','description','colour','material','dimensions','image_urls']
 	for designer_url in designer_urls.keys():
 		designer_page_data = get_designer_data_voy(designer_url,designer_urls[designer_url])
-                for u in designer_page_data:
-                        prod_data = get_product_data_voy(scraper_url_voy+u.replace(' ','%20'))
-                        csv_exporter('voylla-'+designer_url.split('/')[-1].split('?')[0].replace('%20',' ').replace('&',''),prod_data['prod'],headers)
+		for u in designer_page_data:
+			prod_data = get_product_data_voy(scraper_url_voy+u.replace(' ','%20'))
+			csv_exporter('voylla-'+designer_url.split('/')[-1].split('?')[0].replace('%20',' ').replace('&',''),prod_data['prod'],headers)
 
 def store_image(url,storename="default",productname="default-product",image_count=1):
 	r = requests.get(url, stream=True)
@@ -283,7 +283,7 @@ def store_image(url,storename="default",productname="default-product",image_coun
 					f.write(chunk)
 				f.close()
 	except:
-		pass
+		print "COULD NOT DOWNLOAD"
 
 def download_images(file_name):
 	if file_name.split('.')[-1] !='csv':
