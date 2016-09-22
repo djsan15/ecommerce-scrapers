@@ -14,7 +14,15 @@ designer_urls_voylla={
 	}
 
 designer_urls_exclusively = [
-	'http://in.exclusively.com/brand/Anita%20Dongre?',
+#'http://in.exclusively.com/search?keyword=blushing%20couture&categoryId=0&internalRequestType=filter&sort=rec',
+# 'http://in.exclusively.com/search?keyword=Nidhika+Shekhar&categoryId=0',
+# 'http://in.exclusively.com/search?keyword=sadan+pane&categoryId=0',
+# 'http://in.exclusively.com/search?keyword=Sonia+Jetleey&categoryId=0',
+'http://in.exclusively.com/search?keyword=Soup%20By%20Sougat%20Paul&categoryId=0&internalRequestType=filter&sort=rec',
+'http://in.exclusively.com/search?keyword=study+by+janak&categoryId=0',
+'http://in.exclusively.com/search?keyword=tanko+by+shipra&categoryId=0',
+'http://in.exclusively.com/search?keyword=%09Vandana+Sethi&categoryId=0',
+'http://in.exclusively.com/search?keyword=Vemanya&categoryId=0',
 	]
 
 
@@ -37,31 +45,37 @@ import requests
 import math
 import datetime
 import uuid
+import socket
 #execfile('/home/sanchit/glitstreet-project/scraper.py')
 scraper_url_exc='http://in.exclusively.com'
 scraper_url_voy = 'https://www.voylla.com'
 
 def get_html(url):
+	html=""
 	try:
-		html = urlopen(url).read()
-		return html
+		html = urlopen(url,timeout=30).read()
+	except socket.timeout:
+		print "TIMEOUT: sleeping for 5 mins"
+		time.sleep(100)
+		try:
+			html = urlopen(url,timeout=30).read()
+		except:
+			print "TIMEOUT"
 	except:
 		print "Sleeping 5 mins"
 		time.sleep(300)
 		try:
 			html = urlopen(url).read()
-			return html
 		except:
 			print "Sleeping 15 mins"
 			time.sleep(900)
 			try:
 				html = urlopen(url).read()
-				return html
 			except:
 				print "Sleeping 1 hr"
 				time.sleep(3600)
 				html = urlopen(url).read()
-				return html
+	return html
 
 def get_product_data_exc(prod_url):
 	prod_url = prod_url.replace(' ','%20')
@@ -133,6 +147,7 @@ def get_designer_data_exc(designer_url):
 	# print infinite_urls
 	for u in infinite_urls[:1]:
 		product_urls += get_product_urls(u,'div.imgdiv a')
+	print len(product_urls)
 	print '----------------DONE---------------------'
 	return product_urls
 
