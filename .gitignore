@@ -1,5 +1,6 @@
 images/
 *.pyc
 *.csv
+*.csv#
 *.whl
 scraper-images/
