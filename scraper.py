@@ -282,6 +282,35 @@ def main_voy():
 			prod_data = get_product_data_voy(scraper_url_voy+u.replace(' ','%20'))
 			csv_exporter('voylla-'+designer_url.split('/')[-1].split('?')[0].replace('%20',' ').replace('&',''),prod_data['prod'],headers)
 
+def get_designer_data_snap(designer_url,cat_id=0,start_count=0):
+	try:
+		root_cat_id = str(int(designer_url.split(':')[1]))
+	except:
+		root_cat_id = str(cat_id)
+	parsed_url = urlparse(designer_url)
+	query = ''
+	for q in parsed_url.query.split('&'):
+		query +=q +'&'
+	cat_name = parsed_url.path.split('/')[-1]
+	api_url = "https://www.snapdeal.com/acors/json/product/get/search/"+root_cat_id+"/"
+	api_url2= "/20?"+query+"brandPageUrl=&keyword=&searchState=categoryRedirected="+cat_name+"|previousRequest=true|serviceabilityUsed=false&pincode=&vc=&webpageName=categoryPage&campaignId=&brandName=&isMC=false&clickSrc=unknown&showAds=true&cartId="
+	print api_url+str(start_count)+api_url2
+	product_urls=[]
+	ppp=20
+	html = get_html(api_url+str(start_count)+api_url2)
+	soup= BeautifulSoup(html,'lxml')
+	infinite_urls=[]
+	resultcount= int(soup.select('div.jsNumberFound')[0].text)
+	print resultcount
+	for i in range(start_count,int(resultcount/ppp)):
+		infinite_urls.append(api_url+str(i*ppp)+api_url2)
+	if resultcount % ppp !=0:
+		infinite_urls.append(api_url+str(int(resultcount/ppp)*ppp)+api_url2)
+	for u in infinite_urls:
+		product_urls += get_product_urls(u,'div.product-tuple-image a.dp-widget-link')
+	# print product_urls
+	return product_urls
+
 def store_image(url,storename="default",productname="default-product",image_count=1):
 	r = requests.get(url, stream=True)
 	directory = os.getcwd() + '/images/'+storename+'/'+productname+'/'
