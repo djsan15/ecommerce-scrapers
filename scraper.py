@@ -1,4 +1,7 @@
 #INPUT DATA
+designer_urls_amazon={
+	'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=earring&rh=i%3Aaps%2Ck%3Aearring&ajr=0':'earrings',#unique filename
+}
 designer_urls_voylla={
 'https://www.voylla.com/jewellery/earrings?utf8=%E2%9C%93&per_page=&vprice_between%5D%5B%5D=999+to+3600&collection%5B%5D=Traditional+and+imitation':80,
 'https://www.voylla.com/jewellery/earrings?utf8=%E2%9C%93&per_page=&vprice_between%5D%5B%5D=1299+to+2600&collection%5B%5D=Classic':161,
@@ -29,7 +32,7 @@ designer_urls_exclusively = [
 
 #DO NOT EDIT BELOW THIS
 from urllib2 import urlopen,Request
-import urllib
+import urllib2
 from bs4 import BeautifulSoup
 import pprint
 import json
@@ -52,29 +55,38 @@ scraper_url_voy = 'https://www.voylla.com'
 
 def get_html(url):
 	html=""
+	request = Request(url)
+	request.add_header('User-Agent','Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36')
 	try:
-		html = urlopen(url,timeout=30).read()
+		html = urlopen(request,timeout=30).read()
 	except socket.timeout:
-		print "TIMEOUT: sleeping for 5 mins"
+		print "TIMEOUT: sleeping for 100 secs"
 		time.sleep(100)
 		try:
-			html = urlopen(url,timeout=30).read()
+			html = urlopen(request,timeout=30).read()
 		except:
 			print "TIMEOUT"
+	except urllib2.URLError:
+		print "TIMEOUT (URL ERROR): sleeping for 100 secs"
+		time.sleep(100)
+		try:
+			html = urlopen(request,timeout=30).read()
+		except:
+			print "TIMEOUT (URL ERROR)"
 	except:
 		print "Sleeping 5 mins"
 		time.sleep(300)
 		try:
-			html = urlopen(url).read()
+			html = urlopen(request).read()
 		except:
 			print "Sleeping 15 mins"
 			time.sleep(900)
 			try:
-				html = urlopen(url).read()
+				html = urlopen(request).read()
 			except:
 				print "Sleeping 1 hr"
 				time.sleep(3600)
-				html = urlopen(url).read()
+				html = urlopen(request).read()
 	return html
 
 def get_product_data_exc(prod_url):
@@ -311,9 +323,129 @@ def get_designer_data_snap(designer_url,cat_id=0,start_count=0):
 	# print product_urls
 	return product_urls
 
-def store_image(url,storename="default",productname="default-product",image_count=1):
+def get_product_data_amaz(prod_url,asin='None',des_name='None'):
+	html = get_html(prod_url)
+	soup= BeautifulSoup(html,'lxml')
+	prod={'asin':asin,'designer name':des_name}
+	try:
+		if asin =='None':
+			if str(prod_url.split('?')[0].split('/')[-1]).startswith('ref='):
+				prod['asin'] = prod_url.split('?')[0].split('/')[-2]
+			else:
+				prod['asin'] = prod_url.split('?')[0].split('/')[-1]
+	except:
+		pass
+	try:
+		prod['name'] = soup.select("h1.a-size-large span.a-size-large")[0].text.strip().encode('ascii', 'ignore')
+	except:
+		prod['name']= ' '
+	try:
+		prod['selling price'] = soup.select('td.a-span12 span.a-size-medium')[0].text[1:].strip().encode('ascii', 'ignore')
+	except:
+		prod['selling price']= ' '
+	try:
+		prod['description']= ''
+		for para in soup.select('div.a-row div.a-section p'):
+			prod['description'] += para.text.strip().encode('ascii', 'ignore')
+	except:
+		prod['description']= ' '
+	prod['colour'] = ''
+	prod['dimensions']=''
+	prod_att_keys = soup.select('th.a-span5')
+	prod_att_values = soup.select('td.a-span7')
+	att_dict={}
+	for i,kv in enumerate(prod_att_keys):
+		k=kv.text.strip().lower()
+		if k=='colour' or k == 'color':
+			prod['colour'] += prod_att_values[i].text.strip() +','
+		elif k=='material':
+			prod['material'] = prod_att_values[i].text.strip()
+		elif k=='item width' or k=='item length' or k=='item weight' or k=='weight':
+			prod['dimensions'] += str(kv.text.strip()) + ' : '+prod_att_values[i].text.strip()+', '
+		elif k=='brand' and des_name=='None':
+			prod['designer name']=str(prod_att_values[i].text.strip())
+	try:
+		first_detail = soup.select('td.bucket div.content > ul > li:nth-of-type(1)')[0].text
+		if 'dimension' in first_detail.lower() or 'weight' in first_detail.lower():
+			prod['dimensions'] += first_detail.split(':',1)[0].strip() +' : '+first_detail.split(':',1)[1].strip()
+	except:
+		pass
+	prod['dimensions'] = prod['dimensions'].replace('\n','').strip()
+	# Hi Res IMAGES
+	prod['image_urls']=[]
+	all_scripts  = soup.find_all("script", {"src":False})
+	image_script = None
+	for s in all_scripts:
+		if 'maintainHeight' in s.text:
+			image_script = s
+	if image_script:
+		var_index = image_script.text.strip().index('var data')
+		text_value = image_script.text.strip()[var_index:].split(';')[0]
+		json_value = '{%s}' % (text_value.split('{', 1)[1].rsplit('}', 1)[0],)
+		value = json.loads(json_value.replace("'",'"'))
+		for i in value['colorImages']['initial']:
+			if i['hiRes']:
+				prod['image_urls'].append(i['hiRes'])
+			elif i['large']:
+				prod['image_urls'].append(i['large'])
+			elif i['main'].keys():
+				try:
+					im_url = i['main'].keys()[0]
+				except:
+					continue
+				try:
+					prod['image_urls'].append(im_url[:im_url.index('._')]+im_url[im_url.index('_.')+1:])
+				except:
+					prod['image_urls'].append(im_url)
+	return prod
+
+def get_designer_data_amaz(designer_url):
+	print "---------------FETCHING DESIGNER PRODUCT URLS----------------------"
+	search_results=[]
+	api_url = designer_url +'&dataVersion=v0.2&cid=08e6b9c8bdfc91895ce634a035f3d00febd36433&format=json'
+	html = get_html(api_url)
+	html_json=json.loads(html)
+	num_pages = int(html_json['pagination']['numPages'])
+	for section in html_json['results']['sections']:
+		for product in section['items']:
+			sr={}
+			sr['name'] = product['title']
+			sr['asin'] = product['asin']
+			sr['url'] = 'http://www.amazon.in' + product['link']['url']
+			sr['brand_name']=product.get('brandName','None')
+			search_results.append(sr)
+	for i in xrange(2,3):
+		url = api_url +'&page='+str(i)
+		print url
+		time.sleep(5)
+		html = get_html(url)
+		html_json=json.loads(html)
+		for section in html_json['results']['sections']:
+			for product in section['items']:
+				sr={}
+				sr['name'] = product['title']
+				sr['asin'] = product['asin']
+				sr['url'] = 'http://www.amazon.in' + product['link']['url']
+				sr['brand_name']=product.get('brandName','None')
+				search_results.append(sr)
+	print len(search_results)
+	print '----------------DONE---------------------'
+	return search_results
+
+def main_amaz():
+	designer_urls = designer_urls_amazon
+	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls']
+	for designer_url in designer_urls.keys():
+		designer_page_data = get_designer_data_amaz(designer_url)
+		for sr in designer_page_data:
+			time.sleep(2)
+			print sr['url']
+			prod = get_product_data_amaz(sr['url'],sr['asin'],sr['brand_name'])
+			csv_exporter('amazon-'+designer_urls[designer_url],prod,headers)
+
+def store_image(url,sitename='default',storename="default-store",productname="default-product",image_count=1):
 	r = requests.get(url, stream=True)
-	directory = os.getcwd() + '/images/'+storename+'/'+productname+'/'
+	directory = os.getcwd() + '/images/'+sitename+'/'+storename+'/'+productname+'/'
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 	try:
@@ -340,8 +472,9 @@ def download_images(file_name):
 				image_urls =[]
 			print image_urls
 			for i,im_url in enumerate(list(image_urls)):
-				im_url = str(im_url.strip()).replace("'","").replace('"','').strip()
-				if "images.voylla.com" in im_url:
-					im_url= im_url.replace("/large/","/original/")
-				print im_url
-				store_image(im_url,row.get('designer name'),row.get('name'),i)
+				im_url = str(im_url.strip()).replace("u'","").replace("'","").replace('"','').strip()
+				if im_url != 'None':
+					if "images.voylla.com" in im_url:
+						im_url= im_url.replace("/large/","/original/")
+					print im_url
+					store_image(im_url,file_name.split('-')[0].split('.')[0],row.get('designer name'),row.get('name'),i)
