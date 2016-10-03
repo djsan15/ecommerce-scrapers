@@ -228,6 +228,7 @@ def get_product_data_voy(prod_url):
 	html = get_html(prod_url)
 	soup= BeautifulSoup(html,'lxml')
 	prod={}
+	prod['prod_url'] = prod_url
 	try:
 		prod['name'] = soup.select("h1")[0].text.strip().encode('ascii', 'ignore')
 	except:
@@ -242,6 +243,10 @@ def get_product_data_voy(prod_url):
 			prod['description'] += para.text.strip().encode('ascii', 'ignore')
 	except:
 		prod['description']= ' '
+	try:
+		prod['prod_code'] = soup.select('td.golden_color span:nth-of-type(1)')[0].text.strip().encode('ascii', 'ignore')
+	except:
+		pass
 	try:
 		prod['colour']=''
 		prop_list  = soup.select('div[id^="product-properties-display"]')[1].select('td')
@@ -287,7 +292,7 @@ def get_product_data_voy(prod_url):
 
 def main_voy():
 	designer_urls = designer_urls_voylla
-	headers = ['designer name','name','selling price','description','colour','material','dimensions','image_urls']
+	headers = ['designer name','name','selling price','description','colour','material','dimensions','image_urls','prod_url','prod_code']
 	for designer_url in designer_urls.keys():
 		designer_page_data = get_designer_data_voy(designer_url,designer_urls[designer_url])
 		for u in designer_page_data:
