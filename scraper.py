@@ -21,11 +21,12 @@ designer_urls_exclusively = [
 # 'http://in.exclusively.com/search?keyword=Nidhika+Shekhar&categoryId=0',
 # 'http://in.exclusively.com/search?keyword=sadan+pane&categoryId=0',
 # 'http://in.exclusively.com/search?keyword=Sonia+Jetleey&categoryId=0',
-'http://in.exclusively.com/search?keyword=Soup%20By%20Sougat%20Paul&categoryId=0&internalRequestType=filter&sort=rec',
-'http://in.exclusively.com/search?keyword=study+by+janak&categoryId=0',
-'http://in.exclusively.com/search?keyword=tanko+by+shipra&categoryId=0',
-'http://in.exclusively.com/search?keyword=%09Vandana+Sethi&categoryId=0',
-'http://in.exclusively.com/search?keyword=Vemanya&categoryId=0',
+# 'http://in.exclusively.com/search?keyword=Soup%20By%20Sougat%20Paul&categoryId=0&internalRequestType=filter&sort=rec',
+# 'http://in.exclusively.com/search?keyword=study+by+janak&categoryId=0',
+# 'http://in.exclusively.com/search?keyword=tanko+by+shipra&categoryId=0',
+# 'http://in.exclusively.com/search?keyword=%09Vandana+Sethi&categoryId=0',
+# 'http://in.exclusively.com/search?keyword=Vemanya&categoryId=0',
+'http://in.exclusively.com/search?keyword=soup&categoryId=0&internalRequestType=filter&q=Brand%3ASOUP%20by%20Sougat%20Paul'
 	]
 
 
@@ -157,7 +158,7 @@ def get_designer_data_exc(designer_url):
 	if resultcount % ppp !=0:
 		infinite_urls.append(designer_url+'&start='+str(int(resultcount/ppp)*ppp))
 	# print infinite_urls
-	for u in infinite_urls[:1]:
+	for u in infinite_urls:
 		product_urls += get_product_urls(u,'div.imgdiv a')
 	print len(product_urls)
 	print '----------------DONE---------------------'
