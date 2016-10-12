@@ -1,6 +1,7 @@
 #INPUT DATA
 designer_urls_amazon={
-	'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=earring&rh=i%3Aaps%2Ck%3Aearring&ajr=0':'earrings',#unique filename
+'http://www.amazon.in/gp/search/ref=sr_nr_p_89_168?fst=as%3Aoff&rh=n%3A1571271031%2Cn%3A%211571272031%2Cn%3A1953602031%2Cn%3A1968253031%2Cn%3A1968255031%2Cp_36%3A4595086031%2Cp_89%3ARaindrops&bbn=1968255031&ie=UTF8&qid=1475736663&rnid=3837712031&lo=apparel':'amaz',
+	# 'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=earring&rh=i%3Aaps%2Ck%3Aearring&ajr=0':'earrings',#unique filename
 }
 designer_urls_voylla={
 'https://www.voylla.com/jewellery/earrings?utf8=%E2%9C%93&per_page=&vprice_between%5D%5B%5D=999+to+3600&collection%5B%5D=Traditional+and+imitation':80,
@@ -17,6 +18,8 @@ designer_urls_voylla={
 	}
 
 designer_urls_exclusively = [
+'http://in.exclusively.com/search?keyword=vandana&categoryId=0&internalRequestType=filter&q=Brand%3AVandana%20Sethi',
+'http://in.exclusively.com/search?keyword=soup&categoryId=0'
 #'http://in.exclusively.com/search?keyword=blushing%20couture&categoryId=0&internalRequestType=filter&sort=rec',
 # 'http://in.exclusively.com/search?keyword=Nidhika+Shekhar&categoryId=0',
 # 'http://in.exclusively.com/search?keyword=sadan+pane&categoryId=0',
@@ -26,7 +29,7 @@ designer_urls_exclusively = [
 # 'http://in.exclusively.com/search?keyword=tanko+by+shipra&categoryId=0',
 # 'http://in.exclusively.com/search?keyword=%09Vandana+Sethi&categoryId=0',
 # 'http://in.exclusively.com/search?keyword=Vemanya&categoryId=0',
-'http://in.exclusively.com/search?keyword=soup&categoryId=0&internalRequestType=filter&q=Brand%3ASOUP%20by%20Sougat%20Paul'
+# 'http://in.exclusively.com/search?keyword=soup&categoryId=0&internalRequestType=filter&q=Brand%3ASOUP%20by%20Sougat%20Paul'
 	]
 
 
@@ -144,6 +147,7 @@ def get_product_urls(infinite_url,selector):
 def get_designer_data_exc(designer_url):
 	time.sleep(5)
 	print "---------------FETCHING DESIGNER PRODUCT URLS----------------------"
+	print designer_url
 	product_urls=[]
 	ppp=24
 	html = get_html(designer_url)
@@ -377,6 +381,9 @@ def get_product_data_amaz(prod_url,asin='None',des_name='None'):
 	except:
 		pass
 	prod['dimensions'] = prod['dimensions'].replace('\n','').strip()
+	prod['other_desc']=""
+	for s in soup.select('div.a-fixed-right-grid-col ul.a-vertical span.a-list-item'):
+		prod['other_desc'] += s.text.strip() +'| '
 	# Hi Res IMAGES
 	prod['image_urls']=[]
 	all_scripts  = soup.find_all("script", {"src":False})
@@ -484,3 +491,40 @@ def download_images(file_name):
 						im_url= im_url.replace("/large/","/original/")
 					print im_url
 					store_image(im_url,file_name.split('-')[0].split('.')[0],row.get('designer name'),row.get('name'),i)
+
+def get_amaz_desc(file_name):
+	if file_name.split('.')[-1] !='csv':
+		return "please enter a csv file"
+	asins = []
+	csvfile = open(file_name)
+	reader = csv.DictReader(csvfile)
+	for row in reader:
+		if row['asin'].strip() != 'asin':
+			# try:
+			asins.append(row['asin'])
+	csvfile.close()
+	dest_name = file_name.split('.',1)[0]+'-temp.'+file_name.split('.',1)[1]
+	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','other_desc']
+	dest = open(dest_name, 'w')
+	writer = csv.writer(dest)
+	writer.writerow(headers)
+	dest.close()
+	for asin in asins:
+		try:
+			url = "http://www.amazon.in/d/"+asin
+			html = get_html(url)
+			soup= BeautifulSoup(html,'lxml')
+			other_desc=""
+			for s in soup.select('div.a-fixed-right-grid-col ul.a-vertical span.a-list-item'):
+				other_desc += s.text.strip()
+			row['other_desc'] = other_desc
+			# print other_desc
+			a = [row[k] for k,v in row.iteritems()]
+			print a
+			dest = open(dest_name, 'w')
+			writer = csv.writer(dest)
+			writer.writerow(a)
+		except:
+			pass
+		finally:
+			dest.close()
