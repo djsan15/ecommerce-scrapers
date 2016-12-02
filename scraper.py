@@ -1,6 +1,7 @@
 #INPUT DATA
 designer_urls_amazon={
-'http://www.amazon.in/gp/search/ref=sr_nr_p_89_168?fst=as%3Aoff&rh=n%3A1571271031%2Cn%3A%211571272031%2Cn%3A1953602031%2Cn%3A1968253031%2Cn%3A1968255031%2Cp_36%3A4595086031%2Cp_89%3ARaindrops&bbn=1968255031&ie=UTF8&qid=1475736663&rnid=3837712031&lo=apparel':'amaz',
+# 'http://www.amazon.in/gp/search/ref=sr_nr_p_89_168?fst=as%3Aoff&rh=n%3A1571271031%2Cn%3A%211571272031%2Cn%3A1953602031%2Cn%3A1968253031%2Cn%3A1968255031%2Cp_36%3A4595086031%2Cp_89%3ARaindrops&bbn=1968255031&ie=UTF8&qid=1475736663&rnid=3837712031&lo=apparel':'amaz',
+'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Dapparel&field-keywords=Biba+Women%27s+Straight+Kurta':'ama-test',
 	# 'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=earring&rh=i%3Aaps%2Ck%3Aearring&ajr=0':'earrings',#unique filename
 }
 designer_urls_voylla={
@@ -381,6 +382,15 @@ def get_product_data_amaz(prod_url,asin='None',des_name='None'):
 	except:
 		pass
 	prod['dimensions'] = prod['dimensions'].replace('\n','').strip()
+	prod["sizes"] = ""
+	try:
+		prod["sizes"] += str(soup.select('span.selection')[0].text).strip().replace('\n','')+ ", "
+	except:
+		pass
+	try:
+		prod["sizes"] += ','.join(str(soup.select('span.twister-dropdown-highlight select.a-native-dropdown')[0].text).replace('\n','').strip().replace('Select','').split())
+	except:
+		pass
 	prod['other_desc']=""
 	for s in soup.select('div.a-fixed-right-grid-col ul.a-vertical span.a-list-item'):
 		prod['other_desc'] += s.text.strip() +'| '
@@ -447,7 +457,7 @@ def get_designer_data_amaz(designer_url):
 
 def main_amaz():
 	designer_urls = designer_urls_amazon
-	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls']
+	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes']
 	for designer_url in designer_urls.keys():
 		designer_page_data = get_designer_data_amaz(designer_url)
 		for sr in designer_page_data:
