@@ -1,7 +1,6 @@
 #INPUT DATA
 designer_urls_amazon={
 'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=ahs+crafts':'ahs2',
-	# 'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=earring&rh=i%3Aaps%2Ck%3Aearring&ajr=0':'earrings',#unique filename
 }
 designer_urls_voylla={
 'https://www.voylla.com/jewellery/earrings?utf8=%E2%9C%93&per_page=&vprice_between%5D%5B%5D=999+to+3600&collection%5B%5D=Traditional+and+imitation':80,
@@ -382,6 +381,15 @@ def get_product_data_amaz(prod_url,asin='None',des_name='None'):
 	except:
 		pass
 	prod['dimensions'] = prod['dimensions'].replace('\n','').strip()
+	prod["sizes"] = ""
+	try:
+		prod["sizes"] += str(soup.select('span.selection')[0].text).strip().replace('\n','')+ ", "
+	except:
+		pass
+	try:
+		prod["sizes"] += ','.join(str(soup.select('span.twister-dropdown-highlight select.a-native-dropdown')[0].text).replace('\n','').strip().replace('Select','').split())
+	except:
+		pass
 	prod['other_desc']=""
 	for s in soup.select('div.a-fixed-right-grid-col ul.a-vertical span.a-list-item'):
 		prod['other_desc'] += s.text.strip() +'| '
@@ -451,7 +459,7 @@ def get_designer_data_amaz(designer_url):
 
 def main_amaz():
 	designer_urls = designer_urls_amazon
-	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls']
+	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes']
 	for designer_url in designer_urls.keys():
 		designer_page_data = get_designer_data_amaz(designer_url)
 		for sr in designer_page_data:
