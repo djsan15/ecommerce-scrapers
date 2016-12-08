@@ -1,6 +1,6 @@
 #INPUT DATA
 designer_urls_amazon={
-'http://www.amazon.in/gp/search/ref=sr_nr_p_89_168?fst=as%3Aoff&rh=n%3A1571271031%2Cn%3A%211571272031%2Cn%3A1953602031%2Cn%3A1968253031%2Cn%3A1968255031%2Cp_36%3A4595086031%2Cp_89%3ARaindrops&bbn=1968255031&ie=UTF8&qid=1475736663&rnid=3837712031&lo=apparel':'amaz',
+'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=ahs+crafts':'ahs2',
 	# 'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=earring&rh=i%3Aaps%2Ck%3Aearring&ajr=0':'earrings',#unique filename
 }
 designer_urls_voylla={
@@ -18,8 +18,9 @@ designer_urls_voylla={
 	}
 
 designer_urls_exclusively = [
-'http://in.exclusively.com/search?keyword=vandana&categoryId=0&internalRequestType=filter&q=Brand%3AVandana%20Sethi',
-'http://in.exclusively.com/search?keyword=soup&categoryId=0'
+'https://in.exclusively.com/brand/Qbik'
+# 'http://in.exclusively.com/search?keyword=vandana&categoryId=0&internalRequestType=filter&q=Brand%3AVandana%20Sethi',
+# 'http://in.exclusively.com/search?keyword=soup&categoryId=0'
 #'http://in.exclusively.com/search?keyword=blushing%20couture&categoryId=0&internalRequestType=filter&sort=rec',
 # 'http://in.exclusively.com/search?keyword=Nidhika+Shekhar&categoryId=0',
 # 'http://in.exclusively.com/search?keyword=sadan+pane&categoryId=0',
@@ -427,20 +428,23 @@ def get_designer_data_amaz(designer_url):
 			sr['url'] = 'http://www.amazon.in' + product['link']['url']
 			sr['brand_name']=product.get('brandName','None')
 			search_results.append(sr)
-	for i in xrange(2,3):
+	for i in xrange(1,12):
 		url = api_url +'&page='+str(i)
 		print url
 		time.sleep(5)
 		html = get_html(url)
 		html_json=json.loads(html)
-		for section in html_json['results']['sections']:
-			for product in section['items']:
-				sr={}
-				sr['name'] = product['title']
-				sr['asin'] = product['asin']
-				sr['url'] = 'http://www.amazon.in' + product['link']['url']
-				sr['brand_name']=product.get('brandName','None')
-				search_results.append(sr)
+		try:
+			for section in html_json['results']['sections']:
+				for product in section['items']:
+					sr={}
+					sr['name'] = product['title']
+					sr['asin'] = product['asin']
+					sr['url'] = 'http://www.amazon.in' + product['link']['url']
+					sr['brand_name']=product.get('brandName','None')
+					search_results.append(sr)
+		except:
+			print 'ERROR!!!'
 	print len(search_results)
 	print '----------------DONE---------------------'
 	return search_results
@@ -490,7 +494,7 @@ def download_images(file_name):
 					if "images.voylla.com" in im_url:
 						im_url= im_url.replace("/large/","/original/")
 					print im_url
-					store_image(im_url,file_name.split('-')[0].split('.')[0],row.get('designer name'),row.get('name'),i)
+					store_image(im_url,file_name.split('-')[0].split('.')[0],row.get('designer name'),row.get('prod_code'),i)
 
 def get_amaz_desc(file_name):
 	if file_name.split('.')[-1] !='csv':
@@ -501,7 +505,7 @@ def get_amaz_desc(file_name):
 	for row in reader:
 		if row['asin'].strip() != 'asin':
 			# try:
-			asins.append(row['asin'])
+			asins.append(row)
 	csvfile.close()
 	dest_name = file_name.split('.',1)[0]+'-temp.'+file_name.split('.',1)[1]
 	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','other_desc']
@@ -511,17 +515,22 @@ def get_amaz_desc(file_name):
 	dest.close()
 	for asin in asins:
 		try:
-			url = "http://www.amazon.in/d/"+asin
+			url = "http://www.amazon.in/d/"+asin['asin']
 			html = get_html(url)
 			soup= BeautifulSoup(html,'lxml')
 			other_desc=""
 			for s in soup.select('div.a-fixed-right-grid-col ul.a-vertical span.a-list-item'):
 				other_desc += s.text.strip()
-			row['other_desc'] = other_desc
+			asin['other_desc'] = other_desc
 			# print other_desc
-			a = [row[k] for k,v in row.iteritems()]
+			a = [asin[k] for k,v in asin.iteritems()]
 			print a
-			dest = open(dest_name, 'w')
+			file_exists=False
+			if os.path.isfile(dest_name):
+				dest = open(dest_name, 'ab')
+				file_exists = True
+			else:
+				dest = open(dest_name, 'wb')
 			writer = csv.writer(dest)
 			writer.writerow(a)
 		except:
