@@ -1,6 +1,6 @@
 #INPUT DATA
 designer_urls_amazon={
-'http://www.amazon.in/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=ahs+crafts':'ahs2',
+'http://www.amazon.in/s/ref=sr_pg_1?rh=n%3A1571271031%2Cp_4%3AIndian+Poshakh&ie=UTF8&qid=1481197273':'ahs2',
 }
 designer_urls_voylla={
 'https://www.voylla.com/jewellery/earrings?utf8=%E2%9C%93&per_page=&vprice_between%5D%5B%5D=999+to+3600&collection%5B%5D=Traditional+and+imitation':80,
@@ -53,6 +53,7 @@ import math
 import datetime
 import uuid
 import socket
+import traceback
 #execfile('/home/sanchit/glitstreet-project/scraper.py')
 scraper_url_exc='http://in.exclusively.com'
 scraper_url_voy = 'https://www.voylla.com'
@@ -189,6 +190,7 @@ def csv_exporter(designer_name,prod,headers):
 		writer.writerow(row)
 	except:
 		print "csv writer exception"
+		print str(traceback.format_exc().splitlines()[-1])
 	finally:
 		myfile.close()
 
@@ -333,10 +335,10 @@ def get_designer_data_snap(designer_url,cat_id=0,start_count=0):
 	# print product_urls
 	return product_urls
 
-def get_product_data_amaz(prod_url,asin='None',des_name='None'):
+def get_product_data_amaz(prod_url,asin='None',des_name='None',ssp2=''):
 	html = get_html(prod_url)
 	soup= BeautifulSoup(html,'lxml')
-	prod={'asin':asin,'designer name':des_name}
+	prod={'asin':asin,'designer name':des_name, 'selling price 2':ssp2.encode('ascii', 'ignore')}
 	try:
 		if asin =='None':
 			if str(prod_url.split('?')[0].split('/')[-1]).startswith('ref='):
@@ -391,8 +393,13 @@ def get_product_data_amaz(prod_url,asin='None',des_name='None'):
 	except:
 		pass
 	prod['other_desc']=""
-	for s in soup.select('div.a-fixed-right-grid-col ul.a-vertical span.a-list-item'):
+	for s in soup.select('div.a-fixed-right-grid-col span.a-list-item'):
 		prod['other_desc'] += s.text.strip() +'| '
+	prod['other_desc'] = prod['other_desc'].encode('ascii', 'ignore')
+	prod['ipn']=''
+	for s in soup.select('div.content > ul > li'):
+		if 'part num' in s.text.lower():
+			prod['ipn'] = s.text.strip().encode('ascii', 'ignore')
 	# Hi Res IMAGES
 	prod['image_urls']=[]
 	all_scripts  = soup.find_all("script", {"src":False})
@@ -435,8 +442,12 @@ def get_designer_data_amaz(designer_url):
 			sr['asin'] = product['asin']
 			sr['url'] = 'http://www.amazon.in' + product['link']['url']
 			sr['brand_name']=product.get('brandName','None')
+			try:
+				sr['ssp2'] = product['prices']['usedAndNewOffers']['price']
+			except:
+				sr['ssp2'] = ""
 			search_results.append(sr)
-	for i in xrange(1,12):
+	for i in xrange(1,1):
 		url = api_url +'&page='+str(i)
 		print url
 		time.sleep(5)
@@ -450,22 +461,27 @@ def get_designer_data_amaz(designer_url):
 					sr['asin'] = product['asin']
 					sr['url'] = 'http://www.amazon.in' + product['link']['url']
 					sr['brand_name']=product.get('brandName','None')
+					try:
+						sr['ssp2'] = product['prices']['usedAndNewOffers']['price']
+					except:
+						sr['ssp2'] = ""
 					search_results.append(sr)
 		except:
 			print 'ERROR!!!'
+			print str(traceback.format_exc().splitlines()[-1])
 	print len(search_results)
 	print '----------------DONE---------------------'
 	return search_results
 
 def main_amaz():
 	designer_urls = designer_urls_amazon
-	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes']
+	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes','other_desc','selling price 2','ipn']
 	for designer_url in designer_urls.keys():
 		designer_page_data = get_designer_data_amaz(designer_url)
 		for sr in designer_page_data:
 			time.sleep(2)
 			print sr['url']
-			prod = get_product_data_amaz(sr['url'],sr['asin'],sr['brand_name'])
+			prod = get_product_data_amaz(sr['url'],sr['asin'],sr['brand_name'],ssp2=sr['ssp2'])
 			csv_exporter('amazon-'+designer_urls[designer_url],prod,headers)
 
 def store_image(url,sitename='default',storename="default-store",productname="default-product",image_count=1):
