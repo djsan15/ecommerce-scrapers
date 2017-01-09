@@ -484,6 +484,23 @@ def main_amaz():
 			prod = get_product_data_amaz(sr['url'],sr['asin'],sr['brand_name'],ssp2=sr['ssp2'])
 			csv_exporter('amazon-'+designer_urls[designer_url],prod,headers)
 
+def update_amaz(file_name):
+	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes','other_desc','selling price 2','ipn']
+	if file_name.split('.')[-1] !='csv':
+		return "please enter a csv file"
+	asins = []
+	csvfile = open(file_name)
+	reader = csv.DictReader(csvfile)
+	for row in reader:
+		if row['asin'].strip() != 'asin':
+			asins.append(str(row['asin']))
+	csvfile.close()
+	for asin in asins:
+		url = "http://www.amazon.in/d/"+asin
+		print url
+		prod = get_product_data_amaz(url,asin,'',ssp2='')
+		csv_exporter(file_name.split('.')[0]+'-update',prod,headers)
+
 def store_image(url,sitename='default',storename="default-store",productname="default-product",image_count=1):
 	r = requests.get(url, stream=True)
 	directory = os.getcwd() + '/images/'+sitename+'/'+storename+'/'+productname+'/'
