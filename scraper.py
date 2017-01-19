@@ -335,7 +335,17 @@ def get_designer_data_snap(designer_url,cat_id=0,start_count=0):
 	# print product_urls
 	return product_urls
 
-def get_product_data_amaz(prod_url,asin='None',des_name='None',ssp2=''):
+def get_price_amaz(asin):
+	url = 'http://www.amazon.in/gp/offer-listing/'+asin
+	html = get_html(url)
+	soup= BeautifulSoup(html,'lxml')
+	try:
+		price = soup.select('span.a-size-large > span')[0].text.strip().encode('ascii', 'ignore')
+	except:
+		price = ''
+	return price
+
+def get_product_data_amaz(prod_url,fetch_price=False,asin='None',des_name='None',ssp2=''):
 	html = get_html(prod_url)
 	soup= BeautifulSoup(html,'lxml')
 	prod={'asin':asin,'designer name':des_name, 'selling price 2':ssp2.encode('ascii', 'ignore')}
@@ -347,6 +357,8 @@ def get_product_data_amaz(prod_url,asin='None',des_name='None',ssp2=''):
 				prod['asin'] = prod_url.split('?')[0].split('/')[-1]
 	except:
 		pass
+	if fetch_price:
+		prod['selling price 2'] = get_price_amaz(str(prod['asin']))
 	try:
 		prod['name'] = soup.select("h1.a-size-large span.a-size-large")[0].text.strip().encode('ascii', 'ignore')
 	except:
@@ -498,7 +510,7 @@ def update_amaz(file_name):
 	for asin in asins:
 		url = "http://www.amazon.in/d/"+asin
 		print url
-		prod = get_product_data_amaz(url,asin,'',ssp2='')
+		prod = get_product_data_amaz(url,asin,'',ssp2='',fetch_price=True)
 		csv_exporter(file_name.split('.')[0]+'-update',prod,headers)
 
 def store_image(url,sitename='default',storename="default-store",productname="default-product",image_count=1):
