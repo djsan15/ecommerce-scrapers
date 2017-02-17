@@ -474,7 +474,7 @@ def get_designer_data_amaz(designer_url):
 			except:
 				sr['ssp2'] = ""
 			search_results.append(sr)
-	for i in xrange(1,1):
+	for i in xrange(1,12):
 		url = api_url +'&page='+str(i)
 		print url
 		time.sleep(5)
@@ -525,7 +525,7 @@ def update_amaz(file_name):
 	for asin in asins:
 		url = "http://www.amazon.in/d/"+asin
 		print url
-		prod = get_product_data_amaz(url,asin,'',ssp2='',fetch_price=True)
+		prod = get_product_data_amaz(url,True,asin,'',ssp2='')
 		csv_exporter(file_name.split('.')[0]+'-update',prod,headers)
 
 def store_image(url,sitename='default',storename="default-store",productname="default-product",image_count=1):
