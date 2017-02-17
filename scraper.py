@@ -54,6 +54,7 @@ import datetime
 import uuid
 import socket
 import traceback
+import re
 #execfile('/home/sanchit/glitstreet-project/scraper.py')
 scraper_url_exc='http://in.exclusively.com'
 scraper_url_voy = 'https://www.voylla.com'
@@ -367,6 +368,20 @@ def get_product_data_amaz(prod_url,fetch_price=False,asin='None',des_name='None'
 		prod['selling price'] = soup.select('td.a-span12 span.a-size-medium')[0].text[1:].strip().encode('ascii', 'ignore')
 	except:
 		prod['selling price']= ' '
+	#Choose greater of 2
+	try:
+		prod_sp= prod['selling price'].strip()
+		prod_sp2 = prod['selling price 2'].strip()
+		prod_prices = filter(None,prod_sp.split('-')+[prod_sp2])
+		if prod_prices:
+			for i in xrange(0,len(prod_prices)):
+				prod_prices[i]=float(re.sub('[^0-9.]+', '',prod_prices[i]).strip('. '))
+			prod['selling price'] = str(max(prod_prices))
+		elif not prod_sp and prod_sp2:
+			prod['selling price'] = prod_sp2
+	except:
+		if not prod['selling price'].strip() and prod['selling price 2']:
+			prod['selling price'] = prod['selling price 2']
 	try:
 		prod['description']= ''
 		for para in soup.select('div.a-row div.a-section p'):
