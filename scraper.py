@@ -358,8 +358,6 @@ def get_product_data_amaz(prod_url,fetch_price=False,asin='None',des_name='None'
 				prod['asin'] = prod_url.split('?')[0].split('/')[-1]
 	except:
 		pass
-	if fetch_price:
-		prod['selling price 2'] = get_price_amaz(str(prod['asin']))
 	try:
 		prod['name'] = soup.select("h1.a-size-large span.a-size-large")[0].text.strip().encode('ascii', 'ignore')
 	except:
@@ -368,6 +366,8 @@ def get_product_data_amaz(prod_url,fetch_price=False,asin='None',des_name='None'
 		prod['selling price'] = soup.select('td.a-span12 span.a-size-medium')[0].text[1:].strip().encode('ascii', 'ignore')
 	except:
 		prod['selling price']= ' '
+	if fetch_price and not str(prod['selling price 2']).strip() and not str(prod['selling price']).strip():
+		prod['selling price 2'] = get_price_amaz(str(prod['asin']))
 	#Choose greater of 2
 	try:
 		prod_sp= prod['selling price'].strip()
