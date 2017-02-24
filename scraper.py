@@ -514,7 +514,7 @@ def main_amaz():
 		for sr in designer_page_data:
 			time.sleep(2)
 			print sr['url']
-			prod = get_product_data_amaz(sr['url'],sr['asin'],sr['brand_name'],ssp2=sr['ssp2'])
+			prod = get_product_data_amaz(sr['url'],False,sr['asin'],sr['brand_name'],ssp2=sr['ssp2'])
 			csv_exporter('amazon-'+designer_urls[designer_url],prod,headers)
 
 def get_amaz_prods(file_name):
