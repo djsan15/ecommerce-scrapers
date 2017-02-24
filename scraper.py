@@ -32,6 +32,7 @@ designer_urls_exclusively = [
 # 'http://in.exclusively.com/search?keyword=soup&categoryId=0&internalRequestType=filter&q=Brand%3ASOUP%20by%20Sougat%20Paul'
 	]
 
+product_amazon_urls=['http://www.amazon.in/d/B01N285T4X',]
 
 
 #DO NOT EDIT BELOW THIS
@@ -393,6 +394,11 @@ def get_product_data_amaz(prod_url,fetch_price=False,asin='None',des_name='None'
 	prod_att_keys = soup.select('th.a-span5')
 	prod_att_values = soup.select('td.a-span7')
 	att_dict={}
+	try:
+		if des_name == 'None' or not des_name:
+			prod['designer name'] = soup.select('div.feature div.feature div.a-section a.a-link-normal')[0].text.strip()
+	except:
+		pass
 	for i,kv in enumerate(prod_att_keys):
 		k=kv.text.strip().lower()
 		if k=='colour' or k == 'color':
@@ -510,6 +516,12 @@ def main_amaz():
 			print sr['url']
 			prod = get_product_data_amaz(sr['url'],sr['asin'],sr['brand_name'],ssp2=sr['ssp2'])
 			csv_exporter('amazon-'+designer_urls[designer_url],prod,headers)
+
+def get_amaz_prods(file_name):
+	for url in filter(None,product_amazon_urls):
+		headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes','other_desc','selling price 2','ipn']
+		prod = get_product_data_amaz(url,True,asin='None',des_name='None',ssp2='')
+		csv_exporter(file_name.split('.')[0],prod,headers)
 
 def update_amaz(file_name):
 	headers = ['asin','designer name','name','selling price','description','colour','material','dimensions','image_urls','sizes','other_desc','selling price 2','ipn']
