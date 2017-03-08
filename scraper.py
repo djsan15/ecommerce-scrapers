@@ -56,6 +56,7 @@ import uuid
 import socket
 import traceback
 import re
+import io
 #execfile('/home/sanchit/glitstreet-project/scraper.py')
 scraper_url_exc='http://in.exclusively.com'
 scraper_url_voy = 'https://www.voylla.com'
@@ -617,3 +618,53 @@ def get_amaz_desc(file_name):
 			pass
 		finally:
 			dest.close()
+
+def lr_convert_to_csv(json_obj,dest_name):
+	if dest_name.split('.')[-1] !='csv':
+		return "please enter a csv file name as destination."
+	with open(dest_name, 'w') as csvfile:
+		fieldnames = ['product_id']+json_obj['headers']
+		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+		writer.writeheader()
+		for k,v in json_obj['data'].iteritems():
+			writer.writerow(v)
+
+def lr_prod_attr(file_name):
+	if file_name.split('.')[-1] !='csv':
+		return "please enter a csv file"
+	api_url = 'https://www.limeroad.com/api/products/%s.json?&api_key=farji&device_id=hw12s1213'
+	pids = set()
+	with open(file_name,'rU') as csvfile:
+		reader = csv.DictReader(csvfile)
+		for row in reader:
+			if row['product_id'] != 'product_id':
+				pids.add(str(row['product_id']))
+	dest_name = file_name.split('.',1)[0]+'-attr.csv'
+	headers =set()
+	print pids
+	# with io.open(dest_name, 'w', encoding='utf8') as outfile:
+	json_obj ={'headers':[],'data':{}}
+	headers =set()
+	try:
+		for pid in pids:
+			print pid
+			result_json = requests.get(api_url % pid).json()
+			result_attr = result_json['lr_attributes']
+			result_attr['product_id']=pid
+			json_obj['data'][pid] = result_attr
+			headers.update(result_json['lr_attributes'].keys())
+	except:
+		import traceback; traceback.print_exc();
+	finally:
+		json_obj['headers']=list(headers)
+		lr_convert_to_csv(json_obj,dest_name)
+	print "completed"
+
+if __name__ == "__main__":
+	print 'Choose one of the following methods:'
+	print '  1. main_exc()                  # for exclusively'
+	print '  2. main_voy()                  # for voylla'
+	print '  3. main_amaz()                 # for amazon'
+	print '  4. get_amaz_desc(filename.csv) # to get amazon product description'
+	print '  5. update_amaz(filename.csv)   # to update amazon product data ("asin" column)'
+	print '  6. lr_prod_attr(filename.csv)  # to get limeroad product attributes ("product_id" column)'

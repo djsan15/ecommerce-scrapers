@@ -4,3 +4,4 @@ images/
 *.csv#
 *.whl
 scraper-images/
+*.json
