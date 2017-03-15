@@ -623,27 +623,36 @@ def lr_convert_to_csv(json_obj,dest_name):
 	if dest_name.split('.')[-1] !='csv':
 		return "please enter a csv file name as destination."
 	with open(dest_name, 'w') as csvfile:
-		fieldnames = ['product_id']+json_obj['headers']
+		try:
+			json_obj['headers'].remove('product_id')
+		except:
+			pass
+		try:
+			json_obj['headers'].remove('category')
+		except:
+			pass
+		fieldnames = ['product_id','category']+json_obj['headers']
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		writer.writeheader()
 		for k,v in json_obj['data'].iteritems():
 			writer.writerow(v)
 
-def lr_prod_attr(file_name):
+def lr_prod_data(file_name):
 	if file_name.split('.')[-1] !='csv':
 		return "please enter a csv file"
 	api_url = 'https://www.limeroad.com/api/products/%s.json?&api_key=farji&device_id=hw12s1213'
-	pids = set()
+	pids = collections.OrderedDict()
 	with open(file_name,'rU') as csvfile:
 		reader = csv.DictReader(csvfile)
 		for row in reader:
 			if row['product_id'] != 'product_id':
-				pids.add(str(row['product_id']))
-	dest_name = file_name.split('.',1)[0]+'-attr.csv'
+				pids[str(row['product_id'])]=1
+	dest_name = file_name.split('.',1)[0]+'-data.csv'
 	headers =set()
+	pids = pids.keys()
 	print pids
 	# with io.open(dest_name, 'w', encoding='utf8') as outfile:
-	json_obj ={'headers':[],'data':{}}
+	json_obj ={'headers':[],'data':collections.OrderedDict({})}
 	headers =set()
 	try:
 		for pid in pids:
@@ -651,6 +660,10 @@ def lr_prod_attr(file_name):
 			result_json = requests.get(api_url % pid).json()
 			result_attr = result_json['lr_attributes']
 			result_attr['product_id']=pid
+			try:
+				result_attr['category']=result_json['upid_categories'][0]
+			except:
+				result_attr['category']=' '
 			json_obj['data'][pid] = result_attr
 			headers.update(result_json['lr_attributes'].keys())
 	except:
@@ -667,4 +680,4 @@ if __name__ == "__main__":
 	print '  3. main_amaz()                 # for amazon'
 	print '  4. get_amaz_desc(filename.csv) # to get amazon product description'
 	print '  5. update_amaz(filename.csv)   # to update amazon product data ("asin" column)'
-	print '  6. lr_prod_attr(filename.csv)  # to get limeroad product attributes ("product_id" column)'
+	print '  6. lr_prod_data(filename.csv)  # to get limeroad product data ("product_id" column)'
