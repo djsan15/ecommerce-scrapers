@@ -623,15 +623,19 @@ def lr_convert_to_csv(json_obj,dest_name):
 	if dest_name.split('.')[-1] !='csv':
 		return "please enter a csv file name as destination."
 	with open(dest_name, 'w') as csvfile:
-		try:
-			json_obj['headers'].remove('product_id')
-		except:
-			pass
-		try:
-			json_obj['headers'].remove('category')
-		except:
-			pass
-		fieldnames = ['product_id','category']+json_obj['headers']
+		all_headers = list(json_obj['headers'])
+		end_headers = []
+		start_headers = ['product_id','category']
+		for header in all_headers:
+			try:
+				if 'SizeChartHeader:' in header:
+					end_headers.append(header)
+					json_obj['headers'].remove(header)
+				elif header in start_headers:
+					json_obj['headers'].remove(header)
+			except:
+				pass
+		fieldnames = start_headers+json_obj['headers'] + end_headers
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 		writer.writeheader()
 		for k,v in json_obj['data'].iteritems():
@@ -664,6 +668,15 @@ def lr_prod_data(file_name):
 				result_attr['category']=result_json['upid_categories'][0]
 			except:
 				result_attr['category']=' '
+			#Size Chart
+			if result_json['sizeChart'] and result_json['sizeChart'] != 'null':
+				sc_headers = result_json['sizeChart']['headers']
+				measurement_key = sc_headers[0]
+				for sc_header in sc_headers[1:]:
+					cell_value = ''
+					for obj in result_json['sizeChart']['rows']:
+						cell_value += '%s - %s, ' % (obj[measurement_key], obj[sc_header])
+					result_attr['SizeChartHeader: '+sc_header] = cell_value
 			json_obj['data'][pid] = result_attr
 			headers.update(result_json['lr_attributes'].keys())
 	except:
