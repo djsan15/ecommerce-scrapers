@@ -669,14 +669,14 @@ def lr_prod_data(file_name):
 			except:
 				result_attr['category']=' '
 			#Size Chart
-			if result_json['sizeChart'] and result_json['sizeChart'] != 'null':
-				sc_headers = result_json['sizeChart']['headers']
-				measurement_key = sc_headers[0]
-				for sc_header in sc_headers[1:]:
-					cell_value = ''
-					for obj in result_json['sizeChart']['rows']:
-						cell_value += '%s - %s, ' % (obj[measurement_key], obj[sc_header])
-					result_attr['SizeChartHeader: '+sc_header] = cell_value
+			# if result_json['sizeChart'] and result_json['sizeChart'] != 'null':
+			# 	sc_headers = result_json['sizeChart']['headers']
+			# 	measurement_key = sc_headers[0]
+			# 	for sc_header in sc_headers[1:]:
+			# 		cell_value = ''
+			# 		for obj in result_json['sizeChart']['rows']:
+			# 			cell_value += '%s - %s, ' % (obj[measurement_key], obj[sc_header])
+			# 		result_attr['SizeChartHeader: '+sc_header] = cell_value
 			json_obj['data'][pid] = result_attr
 			headers.update(result_json['lr_attributes'].keys())
 	except:
