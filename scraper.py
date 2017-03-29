@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+reload(sys)
 sys.setdefaultencoding('utf8')
 #INPUT DATA
 designer_urls_amazon={
