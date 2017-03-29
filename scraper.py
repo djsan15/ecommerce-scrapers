@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+import sys
+sys.setdefaultencoding('utf8')
 #INPUT DATA
 designer_urls_amazon={
 'http://www.amazon.in/s/ref=sr_pg_1?rh=n%3A1571271031%2Cp_4%3AIndian+Poshakh&ie=UTF8&qid=1481197273':'ahs2',
