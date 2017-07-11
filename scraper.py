@@ -4,7 +4,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 #INPUT DATA
 designer_urls_amazon={
-'http://www.amazon.in/s/ref=sr_pg_1?rh=n%3A1571271031%2Cp_4%3AIndian+Poshakh&ie=UTF8&qid=1481197273':'ahs2',
+'https://www.amazon.in/s/ref=sr_nr_n_8?fst=as%3Aoff&rh=n%3A1968115031%2Ck%3Amr+button&keywords=mr+button&ie=UTF8&qid=1497680755&rnid=3576079031':'button3',
 }
 designer_urls_voylla={
 'https://www.voylla.com/jewellery/earrings?utf8=%E2%9C%93&per_page=&vprice_between%5D%5B%5D=999+to+3600&collection%5B%5D=Traditional+and+imitation':80,
@@ -485,7 +485,7 @@ def get_designer_data_amaz(designer_url):
 			except:
 				sr['ssp2'] = ""
 			search_results.append(sr)
-	for i in xrange(1,12):
+	for i in xrange(1,16):
 		url = api_url +'&page='+str(i)
 		print url
 		time.sleep(5)
@@ -579,7 +579,10 @@ def download_images(file_name):
 					if "images.voylla.com" in im_url:
 						im_url= im_url.replace("/large/","/original/")
 					print im_url
-					store_image(im_url,file_name.split('-')[0].split('.')[0],row.get('designer name'),row.get('prod_code'),i)
+					try:
+						store_image(im_url,file_name.split('-')[0].split('.')[0],row.get('designer name'),row.get('prod_code'),i)
+					except:
+						print 'ERROR: '+ str(im_url)
 
 def get_amaz_desc(file_name):
 	if file_name.split('.')[-1] !='csv':
