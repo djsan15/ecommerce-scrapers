@@ -675,6 +675,7 @@ def lr_prod_data(file_name):
 				result_attr['category']=result_json['upid_categories'][0]
 			except:
 				result_attr['category']=' '
+			result_attr['Delivery Timeline']= result_json['deliveryTime']
 			#Size Chart
 			# if result_json['sizeChart'] and result_json['sizeChart'] != 'null':
 			# 	sc_headers = result_json['sizeChart']['headers']
